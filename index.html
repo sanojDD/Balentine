@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Will you be my Valentine? 💘</title>
+    <style>
+      :root {
+        --bg1: #fff0f4;
+        --bg2: #ffdfe8;
+        --accent: #c73d57;
+        --muted: #6a2a38;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        background: linear-gradient(135deg, var(--bg1), var(--bg2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: var(--muted);
+        overflow: auto;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 520px;
+        background: #fff;
+        border-radius: 18px;
+        padding: 22px;
+        text-align: center;
+        box-shadow: 0 18px 40px rgba(199, 61, 87, 0.12);
+        border: 1px solid #ffe6ee;
+        position: relative;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.6rem;
+        color: var(--accent);
+      }
+      p.lead {
+        margin: 0 0 16px;
+        font-weight: 600;
+        color: #8a2d3f;
+      }
+
+      .input-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 18px;
+      }
+      input[type="text"] {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #ffd6df;
+        width: 60%;
+        font-size: 1rem;
+      }
+      button.primary {
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(180deg, #ff6f89, #d94468);
+        color: #fff;
+        font-weight: 800;
+        box-shadow: 0 8px 0 rgba(179, 70, 88, 0.16);
+      }
+
+      /* Question area */
+      .question {
+        display: none;
+        margin-top: 6px;
+      }
+      .question.active {
+        display: block;
+      }
+      .greet {
+        font-weight: 800;
+        font-size: 1.15rem;
+      }
+      .buttons {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        margin-top: 18px;
+        position: relative;
+        min-height: 84px;
+      }
+      .btn {
+        padding: 12px 22px;
+        border-radius: 12px;
+        border: 3px solid #fff;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 10px 0 rgba(200, 50, 80, 0.08);
+        user-select: none;
+        touch-action: none;
+        white-space: nowrap;
+      }
+      .btn.yes {
+        background: linear-gradient(180deg, #ff8aa5, #ff6f89);
+        color: white;
+        font-size: 1.05rem;
+        position: relative;
+        z-index: 2;
+      }
+      .btn.no {
+        background: linear-gradient(180deg, #fff6f7, #ffeef2);
+        color: #b43a52;
+        border: 2px solid #ffd6df;
+        font-size: 1.05rem;
+        position: fixed;
+        z-index: 9999;
+      }
+
+      .hint {
+        margin-top: 12px;
+        font-size: 0.95rem;
+        color: #9b3a4f;
+      }
+
+      /* overlay result */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 200;
+        display: none;
+      }
+      .overlay.active {
+        display: flex;
+      }
+      .result-card {
+        background: linear-gradient(180deg, #fff, #fff6f6);
+        padding: 26px;
+        border-radius: 14px;
+        text-align: center;
+        box-shadow: 0 18px 50px rgba(199, 61, 87, 0.16);
+        border: 1px solid #ffdde6;
+        max-width: 420px;
+        width: 90%;
+      }
+      .result-card h2 {
+        margin: 0 0 8px;
+        color: var(--accent);
+      }
+      .result-card p {
+        margin: 0 0 12px;
+        font-weight: 700;
+      }
+
+      /* heart float animation */
+      .heart {
+        position: fixed;
+        pointer-events: none;
+        font-size: 22px;
+        animation: floatUp linear forwards;
+        transform-origin: center;
+        z-index: 250;
+      }
+      @keyframes floatUp {
+        to {
+          transform: translateY(-240px) scale(1.2);
+          opacity: 0;
+        }
+      }
+
+      /* small responsive tweaks */
+      @media (max-width: 420px) {
+        .btn {
+          padding: 10px 14px;
+          font-size: 0.95rem;
+        }
+        input[type="text"] {
+          width: 55%;
+        }
+      }
+
+      /* subtle wobble for attempted clicks */
+      @keyframes wobble {
+        0% {
+          transform: translateY(0);
+        }
+        25% {
+          transform: translateY(-6px) rotate(-4deg);
+        }
+        50% {
+          transform: translateY(0) rotate(4deg);
+        }
+        75% {
+          transform: translateY(-3px) rotate(-2deg);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card" role="main" aria-labelledby="title">
+      <h1 id="title">Will you be my Valentine? 💘</h1>
+
+      <div class="input-row" id="startRow">
+        <input
+          id="nameInput"
+          type="text"
+          placeholder="Your name..."
+          aria-label="Enter your name"
+        />
+        <button class="primary" id="startBtn">Start</button>
+      </div>
+
+      <div class="question" id="questionArea" aria-hidden="true">
+        <div class="greet" id="greeting">Hello!</div>
+        <div class="buttons" id="buttons">
+          <button class="btn yes" id="yesBtn">Yes 💕</button>
+          <button class="btn no" id="noBtn" aria-label="No (try to click me!)">
+            No 😅
+          </button>
+        </div>
+        <div class="hint" id="hint">
+          Try to click "Yes" — the "No" button is very shy 😉
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="overlay"
+      id="overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div class="result-card" id="resultCard">
+        <h2 id="resultTitle">Happy Valentine's Day!</h2>
+        <p id="resultText">Wishing you a day full of love 💖</p>
+        <button class="primary" id="closeBtn">Close</button>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const startRow = document.getElementById("startRow");
+        const nameInput = document.getElementById("nameInput");
+        const startBtn = document.getElementById("startBtn");
+        const questionArea = document.getElementById("questionArea");
+        const greeting = document.getElementById("greeting");
+        const yesBtn = document.getElementById("yesBtn");
+        const noBtn = document.getElementById("noBtn");
+        const buttons = document.getElementById("buttons");
+        const hint = document.getElementById("hint");
+        const overlay = document.getElementById("overlay");
+        const resultTitle = document.getElementById("resultTitle");
+        const resultText = document.getElementById("resultText");
+        const closeBtn = document.getElementById("closeBtn");
+        const card = document.querySelector(".card");
+
+        let playerName = "";
+        let moveCooldown = false;
+        let dodgeEnabled = true;
+        let initialPlaced = false;
+
+        // Place the NO button to a random fixed position anywhere on the viewport.
+        // Ensure it doesn't overlap the YES button (attempts up to tries).
+        function placeNoRandom() {
+          const noRect = noBtn.getBoundingClientRect();
+          const yesRect = yesBtn.getBoundingClientRect();
+          const padding = 12;
+
+          const vw = Math.max(
+            document.documentElement.clientWidth,
+            window.innerWidth || 0
+          );
+          const vh = Math.max(
+            document.documentElement.clientHeight,
+            window.innerHeight || 0
+          );
+
+          // boundaries so button stays visible
+          const minX = padding;
+          const maxX = Math.max(padding, vw - noRect.width - padding);
+          const minY = padding;
+          const maxY = Math.max(padding, vh - noRect.height - padding);
+
+          // try several times to avoid placing too close to yes button
+          const tries = 12;
+          let found = false;
+          let x = (vw - noRect.width) / 2;
+          let y = (vh - noRect.height) / 2;
+
+          for (let i = 0; i < tries; i++) {
+            x = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
+            y = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
+            // distance to yes center
+            const yesCenterX = yesRect.left + yesRect.width / 2;
+            const yesCenterY = yesRect.top + yesRect.height / 2;
+            const noCenterX = x + noRect.width / 2;
+            const noCenterY = y + noRect.height / 2;
+            const distYes = Math.hypot(
+              noCenterX - yesCenterX,
+              noCenterY - yesCenterY
+            );
+            // avoid placing very close to yes button or too near edges
+            if (distYes > Math.max(120, yesRect.width * 1.2)) {
+              found = true;
+              break;
+            }
+          }
+
+          // if not found, just place at a safe margin from top-left
+          if (!found) {
+            x = Math.min(maxX, Math.max(minX, x + 40));
+            y = Math.min(maxY, Math.max(minY, y + 40));
+          }
+
+          // apply fixed positioning
+          noBtn.style.position = "fixed";
+          noBtn.style.left = x + "px";
+          noBtn.style.top = y + "px";
+          noBtn.style.transform = "none";
+          noBtn.style.transition = "left 0.18s ease, top 0.18s ease";
+          initialPlaced = true;
+        }
+
+        // Move NO button away when pointer gets close anywhere on the page
+        function handlePointerMove(e) {
+          if (!dodgeEnabled) return;
+          // don't dodge when overlay active
+          if (overlay.classList.contains("active")) return;
+
+          const clientX =
+            e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+          const clientY =
+            e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
+          const noRect = noBtn.getBoundingClientRect();
+          const centerX = noRect.left + noRect.width / 2;
+          const centerY = noRect.top + noRect.height / 2;
+
+          const dx = clientX - centerX;
+          const dy = clientY - centerY;
+          const dist = Math.hypot(dx, dy);
+
+          // threshold to trigger dodge (bigger on small buttons)
+          const threshold = Math.max(110, noRect.width * 2);
+
+          if (dist < threshold && !moveCooldown) {
+            moveCooldown = true;
+            // small visual feedback
+            noBtn.style.animation = "wobble 260ms ease";
+            setTimeout(() => (noBtn.style.animation = ""), 260);
+            placeNoRandom();
+            setTimeout(() => (moveCooldown = false), 220);
+          }
+        }
+
+        // When No gets focus (keyboard/tab), move it away
+        noBtn.addEventListener("focus", () => {
+          placeNoRandom();
+        });
+
+        // Prevent No from being clicked — instead dodge
+        function handleNoActivate(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          // tiny scale feedback then move
+          noBtn.animate(
+            [
+              { transform: "scale(1)" },
+              { transform: "scale(0.92)" },
+              { transform: "scale(1)" },
+            ],
+            { duration: 180 }
+          );
+          placeNoRandom();
+        }
+
+        noBtn.addEventListener("click", handleNoActivate, { passive: false });
+        noBtn.addEventListener(
+          "pointerdown",
+          (e) => {
+            // prevent touch from "activating"
+            e.preventDefault();
+            placeNoRandom();
+          },
+          { passive: false }
+        );
+
+        // keyboard: block Enter/Space on No
+        noBtn.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+            e.preventDefault();
+            placeNoRandom();
+          }
+        });
+
+        // Yes handler -> show overlay with name & hearts
+        yesBtn.addEventListener("click", () => {
+          showResult();
+        });
+
+        function showResult() {
+          overlay.classList.add("active");
+          overlay.setAttribute("aria-hidden", "false");
+          const name = playerName || "Friend";
+          resultTitle.textContent = `Happy Valentine's Day, ${name}!`;
+          resultText.textContent = `I knew you will click "Yes" — I LOVE YOU 💖`;
+          resultText.textContent = `DAHAL BHAI production 😂😂😂`;
+          // spawn floating hearts
+          for (let i = 0; i < 18; i++) createHeartBurst();
+        }
+
+        closeBtn.addEventListener("click", () => {
+          overlay.classList.remove("active");
+          overlay.setAttribute("aria-hidden", "true");
+        });
+
+        // hearts
+        function createHeartBurst() {
+          const heart = document.createElement("div");
+          heart.className = "heart";
+          heart.textContent = ["💖", "💘", "💞", "💝"][
+            Math.floor(Math.random() * 4)
+          ];
+          // random start near center of card
+          const rect = card.getBoundingClientRect();
+          const startX =
+            rect.left + rect.width * (0.45 + (Math.random() - 0.5) * 0.28);
+          const startY =
+            rect.top + rect.height * (0.4 + (Math.random() - 0.5) * 0.22);
+          heart.style.left = startX + "px";
+          heart.style.top = startY + "px";
+          heart.style.fontSize = 14 + Math.random() * 18 + "px";
+          heart.style.opacity = 1;
+          document.body.appendChild(heart);
+
+          const dur = 1400 + Math.random() * 900;
+          heart.style.animationDuration = dur + "ms";
+          setTimeout(() => heart.remove(), dur + 80);
+        }
+
+        // Start game: read name, show question; attach global pointermove
+        startBtn.addEventListener("click", () => {
+          playerName = nameInput.value.trim();
+          greeting.textContent = playerName
+            ? `Hi, ${playerName}!`
+            : `Hello, sweet friend!`;
+          startRow.style.display = "none";
+          questionArea.classList.add("active");
+          questionArea.setAttribute("aria-hidden", "false");
+
+          // initial placement: center-ish, then allow full-screen dodges
+          placeNoRandom();
+
+          // attach pointer move across the whole document (page)
+          document.addEventListener("pointermove", handlePointerMove);
+          document.addEventListener("touchmove", handlePointerMove, {
+            passive: false,
+          });
+
+          // focus yes for keyboard users
+          yesBtn.focus();
+        });
+
+        // clicking outside overlay closes it
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) {
+            overlay.classList.remove("active");
+            overlay.setAttribute("aria-hidden", "true");
+          }
+        });
+
+        // Ensure No button initially visible (if user refreshes before start)
+        window.addEventListener("load", () => {
+          // hide no until start — keep it off-screen so it's not tabbable
+          noBtn.style.opacity = 0;
+        });
+
+        // when question shown make No visible
+        const observer = new MutationObserver(() => {
+          if (questionArea.classList.contains("active")) {
+            noBtn.style.opacity = 1;
+          }
+        });
+        observer.observe(questionArea, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+
+        // keep No inside viewport on resize (prevent being off-screen)
+        window.addEventListener("resize", () => {
+          // reposition if currently off screen
+          const noRect = noBtn.getBoundingClientRect();
+          const vw = Math.max(
+            document.documentElement.clientWidth,
+            window.innerWidth || 0
+          );
+          const vh = Math.max(
+            document.documentElement.clientHeight,
+            window.innerHeight || 0
+          );
+          const padding = 8;
+          let changed = false;
+          let newLeft = noRect.left,
+            newTop = noRect.top;
+          if (
+            noRect.right < padding ||
+            noRect.left > vw - padding ||
+            noRect.bottom < padding ||
+            noRect.top > vh - padding
+          ) {
+            // re-place near center
+            placeNoRandom();
+          } else {
+            // ensure minimal margin
+            newLeft = Math.max(
+              padding,
+              Math.min(noRect.left, vw - noRect.width - padding)
+            );
+            newTop = Math.max(
+              padding,
+              Math.min(noRect.top, vh - noRect.height - padding)
+            );
+            if (newLeft !== noRect.left || newTop !== noRect.top) {
+              noBtn.style.left = newLeft + "px";
+              noBtn.style.top = newTop + "px";
+              changed = true;
+            }
+          }
+        });
+
+        // small initial floating hearts for charm
+        (function initialHeartsBackground() {
+          for (let i = 0; i < 8; i++) {
+            setTimeout(createHeartBurst, 120 * i);
+          }
+        })();
+      })();
+    </script>
+  </body>
+</html>
